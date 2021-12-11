@@ -27,6 +27,15 @@ spec:
     spec:
       restartPolicy: Always
       serviceAccountName: {{ .Values.webScheduler.serviceAccountName }}
+      initContainers:
+        - name: fix-volume-dags-permissions
+          image: {{ .Values.webScheduler.image }}:{{ .Values.webScheduler.tag }}
+          command: [ "sh", "-c", "chmod -R 777 /usr/local/airflow/dags/" ]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: {{ .Values.webScheduler.dagsMountPath }}
+              name: {{ .Values.webScheduler.dagsVolumeClaim }}
       containers:
         - name: {{ template "airflow.webserver.fullname" . }}
           image: {{ .Values.webScheduler.image }}:{{ .Values.webScheduler.tag }}
@@ -97,7 +106,7 @@ spec:
       volumes:
         - name: {{ .Values.webScheduler.airflowCfgConfigMap }}
           configMap:
-            name: "{{ .Values.webScheduler.airflowCfgConfigMap }}-{{ .Release.Time.Seconds }}"
+            name: "{{ .Values.webScheduler.airflowCfgConfigMap }}-{{ now | unixEpoch }}"
         - name: {{ .Values.webScheduler.dagsVolumeClaim }}  
           persistentVolumeClaim:
             claimName: {{ .Values.webScheduler.dagsVolumeClaim }} 

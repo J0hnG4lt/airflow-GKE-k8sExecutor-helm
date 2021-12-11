@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ template "airflow.fullname" . }}-prehook-{{ .Release.Time.Seconds }}"
+  name: "{{ template "airflow.fullname" . }}-prehook-{{ now | unixEpoch }}"
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-5"
@@ -21,7 +21,7 @@ spec:
       volumes:
         - name: "{{ .Values.webScheduler.airflowCfgConfigMap }}"
           configMap:
-            name: "{{ .Values.webScheduler.airflowCfgConfigMap }}-{{ .Release.Time.Seconds }}"
+            name: "{{ .Values.webScheduler.airflowCfgConfigMap }}-{{ now | unixEpoch }}"
       {{if and .Values.google.enabled .Values.webScheduler.preHook.initContainer -}}
       initContainers:
       - name: check-db-ready

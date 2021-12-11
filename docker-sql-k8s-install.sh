@@ -1,13 +1,13 @@
 #! /usr/bin/env bash
 set -Eeuxo pipefail
 
-kubectl --namespace kube-system create serviceaccount tiller || true
-kubectl create clusterrolebinding tiller \
-                --clusterrole cluster-admin \
-                --serviceaccount=kube-system:tiller || true
-helm init --upgrade --wait --service-account tiller || true
+# kubectl --namespace kube-system create serviceaccount tiller || true
+# kubectl create clusterrolebinding tiller \
+#                 --clusterrole cluster-admin \
+#                 --serviceaccount=kube-system:tiller || true
+# helm init --upgrade --wait --service-account tiller || true
 
-AIRFLOW_NAMESPACE=default
+AIRFLOW_NAMESPACE=airflow
 
 AIRFLOW_DATABASE_USER=airflow
 POSTGRES_ADMIN_PASSWORD=airflow
@@ -21,12 +21,11 @@ KUBECONFIG_FILE_OUTPUT=/tmp/kubeconfig
 helm upgrade \
     --install \
     airflow-postgres \
-    stable/postgresql \
-    --version 0.15.0 \
+    bitnami/postgresql \
     --namespace $AIRFLOW_NAMESPACE \
-    --set postgresPassword=$POSTGRES_ADMIN_PASSWORD \
-    --set postgresUser=$AIRFLOW_DATABASE_USER \
-    --set postgresDatabase=$AIRFLOW_DATABASE_USER_PASSWORD
+    --set global.postgresql.postgresqlPassword=$POSTGRES_ADMIN_PASSWORD \
+    --set global.postgresql.postgresqlUsername=$AIRFLOW_DATABASE_USER \
+    --set global.postgresql.postgresqlDatabase=$AIRFLOW_DATABASE_USER_PASSWORD
 
 SQL_ALCHEMY_CONN=postgresql+psycopg2://$AIRFLOW_DATABASE_USER:$AIRFLOW_DATABASE_USER_PASSWORD@$POSTGRES_SERVICE:$POSTGRES_PORT/$AIRFLOW_DATABASE_NAME
 
@@ -58,7 +57,7 @@ kubectl create secret generic airflow \
 # Label the docker node the same as the workers will have in your dags in staging/production
 
 kubectl label node  \
-        docker-for-desktop \
+        minikube \
         airflow=airflow_workers \
         pool=preemptible \
         --overwrite

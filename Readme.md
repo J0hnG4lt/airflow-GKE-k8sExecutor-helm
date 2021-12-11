@@ -99,7 +99,7 @@ There are a few elements to the chart:
 * Google Cloud Filestore (beta - equivalent of EFS and AFS on AWS and Azure respectively). You need to populate this separately using e.g. Jenkins (see sample jenkins file and instructions below [Jenkins](#Setup-Jenkins-to-sync-dags)).
 * Pre-install hooks add the airflow-RBAC account, dags/logs PV, dags/logs PVC and CloudSQL service. If the step fails at this point, you will need to remove everything before running helm again. See `tidying-up.sh` for details.
 * Pre-install and pre-upgrade hook to run the alembic migrations
-* Separate, templated airflow.cfg a change of which triggers a redeployment of both the web scheduler and the web server. This is due to the name of the configmap being appended with the current seconds (-{{ .Release.Time.Seconds }}) so a new configmap gets deployed each time. You may want to delete old configmaps from time to time.
+* Separate, templated airflow.cfg a change of which triggers a redeployment of both the web scheduler and the web server. This is due to the name of the configmap being appended with the current seconds (-{{ now | unixEpoch }}) so a new configmap gets deployed each time. You may want to delete old configmaps from time to time.
 
 ## Debugging
 
@@ -482,7 +482,7 @@ The below script installs helm, a postgres helm chart and creates the necessary 
 ./docker-sql-k8s-install.sh
 
 DAG_FOLDER=$PWD/dags
-LOG_FOLDER=/tmp/airflowLogs
+LOG_FOLDER=$PWD/logs
 
 helm upgrade \
     --install \

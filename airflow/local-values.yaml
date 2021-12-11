@@ -1,4 +1,4 @@
-namespace: default
+namespace: airflow
 
 google:
   enabled: False
@@ -15,6 +15,8 @@ local:
 # Leave dag subpath empty as it's not an NFS subdirectory
 dagVolume:
   dagSubPath: 
+logVolume:
+  logSubPath: 
 webScheduler: 
   web:
     name: web
@@ -33,7 +35,25 @@ webScheduler:
       requests:
         cpu: 100m
         memory: 100Mi
+  preHook:
+    # This performs the migrations and runs before any new deployment or upgrade
+    install: true
+    initContainer: true
+    args: "chown -R 50000:0 /usr/local/airflow/logs/ && airflow initdb && alembic upgrade heads"
 
 airflowCfg:
   kubernetes:
-    namespace: default
+    namespace: airflow
+    workerServiceAccountName: airflow-rbac
+    deleteWorkerPods: True
+    # This should be the same as the webScheduler.airflowCfgConfigMap unless 
+    # you are creating a second configmap. 
+    # There is currently only one templated (airflow-cfg-configmap.yaml). 
+    # This is named {{ .Values.webScheduler.airflowCfgConfigMap }}
+    airflowConfigmap: airflow-configmap
+    workerContainerRepository: quay.io/eamonkeane/airflow-k8s
+    workerContainerTag: "0.5"
+    # Add a list of secrets in the form of ENV_VARIABLE=KUBERNETES_SECRET_NAME=KUBERNETES_SECRET_KEY
+    # This is injected into the environment of the Kubernetes Executor workers
+  core:
+    dagsFolder: /usr/local/airflow/dags
