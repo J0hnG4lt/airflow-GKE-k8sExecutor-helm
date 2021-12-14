@@ -6,13 +6,13 @@
 
 set -e
 
-RESOURCE_GROUP=
-LOCATION=
-STORAGE_ACCOUNT_NAME=
-POSTGRES_DATABASE_INSTANCE_NAME=
-NODE_VM_SIZE=
-NODE_COUNT=
-AIRFLOW_NAMESPACE=
+RESOURCE_GROUP=siiresourcegroup
+LOCATION=westeurope
+STORAGE_ACCOUNT_NAME=storageaccountsiireb150
+POSTGRES_DATABASE_INSTANCE_NAME=airflow-db
+NODE_VM_SIZE=Standard_B4ms
+NODE_COUNT=3
+AIRFLOW_NAMESPACE=airflow
 # Storage account name must be globally unique and must be between 3 and 24 characters in length and use numbers and lower-case letters only
 
 for i in "$@"
@@ -52,14 +52,14 @@ POSTGRES_PARAMETERS_NEW_FILE_LOCATION=azure/az-airflow-postgres-parameters.json
 
 ## VNET DETAILS
 # https://docs.microsoft.com/en-us/cli/azure/network/vnet?view=azure-cli-latest#az-network-vnet-create
-VNET_NAME=$RESOURCE_GROUP
-SUBNET_NAME=$RESOURCE_GROUP
+VNET_NAME=${RESOURCE_GROUP}_airflow
+SUBNET_NAME=${RESOURCE_GROUP}_airflow
 VNET_ADDRESS_PREFIXES=172.19.0.0/16
 SUBNET_ADDRESS_PREFIX=172.19.0.0/16
 
 ## CLUSTER DETAILS
 # https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az-aks-create
-CLUSTER_NAME=$RESOURCE_GROUP
+CLUSTER_NAME=airflow_cluster_test
 NODE_OSDISK_SIZE=100
 KUBERNETES_VERSION=1.11.1
 TAGS="client=squareroute environment=develop"
@@ -78,9 +78,9 @@ CLUSTER_RESOURCE_GROUP=MC_${RESOURCE_GROUP}_${CLUSTER_NAME}_${LOCATION}
 
 
 CREATE_CLUSTER=TRUE
-CREATE_STORAGE_ACCOUNT=TRUE
+CREATE_STORAGE_ACCOUNT=FALSE
 CREATE_VNET=TRUE
-CREATE_RESOURCE_GROUP=TRUE
+CREATE_RESOURCE_GROUP=FALSE
 CREATE_DATABASE_INSTANCE=TRUE
 CREATE_AIRFLOW_DATABASE=TRUE
 
@@ -143,11 +143,11 @@ az aks get-credentials \
 
 echo "Initialising helm in new cluster"
 # Initialise helm
-kubectl --namespace kube-system create serviceaccount tiller
-kubectl create clusterrolebinding tiller \
-                --clusterrole cluster-admin \
-                --serviceaccount=kube-system:tiller
-helm init --service-account tiller
+# kubectl --namespace kube-system create serviceaccount tiller
+# kubectl create clusterrolebinding tiller \
+#                 --clusterrole cluster-admin \
+#                 --serviceaccount=kube-system:tiller
+# helm init --service-account tiller
 fi
 
 if [ "$CREATE_STORAGE_ACCOUNT" = "TRUE" ]
